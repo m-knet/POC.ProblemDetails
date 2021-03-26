@@ -2,7 +2,7 @@
 using System;
 using System.Threading.Tasks;
 using Hellang.Middleware.ProblemDetails;
-using Microsoft.AspNetCore.Http;
+using Hellang.Middleware.ProblemDetails.Mvc;
 
 namespace POC.ProblemDetails.Controllers
 {
@@ -10,43 +10,53 @@ namespace POC.ProblemDetails.Controllers
     [Route("[controller]")]
     public class ErrorController : ControllerBase
     {
-
+        /// <summary>
+        /// Automatic mapping to problem details using <see cref="ProblemDetailsOptions.MapToStatusCode{TException}"/>
+        /// </summary>
         [HttpGet("exception")]
         public Task Exception()
         {
-            // Automatic mapping to problem details using MapToStatusCode<InvalidOperationException>
             throw new InvalidOperationException("Error Ipsum");
         }
 
+        /// <summary>
+        /// Map the custom property to details
+        /// </summary>
         [HttpGet("custom-exception")]
         public Task CustomException()
         {
-            // Map the custom property to details
-            throw new CustomDomainException {CustomProperty = "Custom error"};
+            throw new CustomDomainException
+            {
+                CustomProperty = "Custom error"
+            };
         }
 
+        /// <summary>
+        /// Automatic mapping to problem details when ApiController attribute is used
+        /// </summary>
         [HttpGet("default")]
         public ActionResult DefaultError()
         {
-            // Automatic mapping to problem details when ApiController attribute is used
             return Conflict();
         }
 
-        [HttpGet("custom")]
-        public ActionResult CustomError()
+        /// <summary>
+        /// Automatic mapping to problem details using <see cref="MvcBuilderExtensions.AddProblemDetailsConventions"/>
+        /// </summary>
+        [HttpGet("convention")]
+        public ActionResult Convention()
         {
-            // Custom error
-            return Conflict(new StatusCodeProblemDetails(StatusCodes.Status409Conflict)
-            {
-                Detail = "Custom error"
-            });
+            return Conflict("Problem details convention");
         }
 
-        [HttpGet("no-problem-details")]
-        public ActionResult Avoid()
+        /// <summary>
+        /// Automatic mapping to problem details using <see cref="MvcBuilderExtensions.AddProblemDetailsConventions"/>
+        /// </summary>
+        [HttpGet("validation-model")]
+        public ActionResult ValidationModel()
         {
-            // No problem details, to avoid
-            return Conflict("This will not return problem details");
+            ModelState.AddModelError("validation", "validation error message");
+            return Conflict(ModelState);
         }
     }
 }
